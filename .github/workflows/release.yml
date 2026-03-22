@@ -31,3 +31,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+            
+      - name: Push to Cloudsmith
+        run: |
+          # Install the official Cloudsmith command-line tool
+          pip3 install --upgrade cloudsmith-cli
+          
+          # Tell Cloudsmith to upload the freshly built files
+          cloudsmith push deb jayakrishna20/file-converter/ubuntu/any-version dist/*.deb
+          cloudsmith push rpm jayakrishna20/file-converter/fedora/any-version dist/*.rpm
+        env:
+          CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
+
