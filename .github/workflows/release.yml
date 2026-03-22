@@ -40,6 +40,7 @@ jobs:
           # Tell Cloudsmith to upload the freshly built files
           for file in dist/*.deb; do
             cloudsmith push deb jayakrishna20/file-converter/ubuntu/any-version "$file"
+            cloudsmith push deb jayakrishna20/file-converter/debian/any-version "$file"
           done
           for file in dist/*.rpm; do
             cloudsmith push rpm jayakrishna20/file-converter/fedora/any-version "$file"
