@@ -2,7 +2,7 @@ name: Deploy About Page to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - about.html
       - hero.png
@@ -19,9 +19,6 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
