@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Avatar (avtr) — Lightning-fast CLI for PDFs & Images</title>
+  <meta name="description" content="Avatar (avtr) is a lightning-fast CLI tool for manipulating PDFs and images directly from your terminal. Convert, merge, split and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080c14;
+      --bg2:       #0d1424;
+      --bg3:       #111a2e;
+      --surface:   #131d30;
+      --border:    #1e2d4a;
+      --accent1:   #6c63ff;
+      --accent2:   #00d4ff;
+      --accent3:   #a855f7;
+      --text:      #e2e8f0;
+      --muted:     #7b8fa6;
+      --code-bg:   #0a0f1c;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    /* ──── NAV ──── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4rem;
+      height: 64px;
+      background: rgba(8, 12, 20, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .nav-logo .rocket { font-size: 1.3rem; }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-github {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text) !important;
+      padding: 0.4rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: border-color 0.2s, background 0.2s !important;
+    }
+    .nav-github:hover {
+      border-color: var(--accent1) !important;
+      background: var(--bg3) !important;
+    }
+
+    /* ──── HERO ──── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem 1.5rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* wide hero: split layout */
+    @media (min-width: 1024px) {
+      .hero {
+        flex-direction: row;
+        text-align: left;
+        align-items: center;
+        gap: 4rem;
+        padding: 7rem 5rem 5rem;
+        max-width: 1500px;
+        margin: 0 auto;
+      }
+      .hero-left  { flex: 1; min-width: 0; }
+      .hero-right { flex: 1; min-width: 0; }
+      .hero-actions { justify-content: flex-start; }
+      .hero-badge   { align-self: flex-start; }
+      .hero-sub     { margin-left: 0; }
+      .hero-terminal { margin-top: 0; max-width: 100%; }
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 1000px; height: 1000px;
+      background: radial-gradient(circle, rgba(108,99,255,0.12) 0%, rgba(0,212,255,0.04) 50%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(108,99,255,0.12);
+      border: 1px solid rgba(108,99,255,0.35);
+      color: #a89cff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.35rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1.8rem;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-img {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 28px;
+      margin-bottom: 2rem;
+      box-shadow: 0 0 60px rgba(108,99,255,0.4), 0 0 120px rgba(0,212,255,0.15);
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 30%, var(--accent1) 60%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+      animation: fadeUp 0.6s 0.15s ease both;
+    }
+
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 580px;
+      margin: 1rem auto 2.5rem;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fadeUp 0.6s 0.25s ease both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      cursor: pointer;
+      border: none;
+    }
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent1), var(--accent3));
+      color: #fff;
+      box-shadow: 0 4px 24px rgba(108,99,255,0.45);
+    }
+    .btn-primary:hover { box-shadow: 0 8px 32px rgba(108,99,255,0.6); }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent1); }
+
+    /* terminal mockup */
+    .hero-terminal {
+      margin-top: 4rem;
+      width: 100%;
+      max-width: 640px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+      animation: fadeUp 0.6s 0.35s ease both;
+    }
+
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-r { background: #ff5f57; }
+    .dot-y { background: #febc2e; }
+    .dot-g { background: #28c840; }
+
+    .terminal-body {
+      padding: 1.4rem 1.6rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.9;
+      text-align: left;
+    }
+
+    .t-prompt { color: var(--accent2); }
+    .t-cmd    { color: var(--text); }
+    .t-out    { color: #6ee7b7; }
+    .t-comment{ color: var(--muted); }
+
+    .cursor {
+      display: inline-block;
+      width: 8px; height: 1em;
+      background: var(--accent2);
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    /* ──── SECTIONS ──── */
+    section { padding: 6rem 2rem; }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent1);
+      margin-bottom: 0.75rem;
+    }
+
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+
+    .section-desc {
+      color: var(--muted);
+      max-width: 520px;
+      font-size: 1rem;
+      margin-bottom: 3.5rem;
+    }
+
+    /* ──── FEATURES ──── */
+    #features { background: var(--bg); }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .features-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.8rem;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      cursor: default;
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent1);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(108,99,255,0.18);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .feature-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      margin-top: 1rem;
+      font-size: 0.72rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent2);
+      background: rgba(0,212,255,0.08);
+      border: 1px solid rgba(0,212,255,0.2);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    /* ──── INSTALL ──── */
+    #install { background: var(--bg2); }
+
+    .install-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .install-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .install-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.2s;
+    }
+
+    .install-card:hover {
+      border-color: var(--accent2);
+      transform: translateY(-3px);
+    }
+
+    .install-card-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.1rem 1.4rem;
+      background: rgba(255,255,255,0.025);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .install-card-head .badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: rgba(108,99,255,0.2);
+      color: #a89cff;
+      border: 1px solid rgba(108,99,255,0.3);
+      padding: 0.2rem 0.55rem;
+      border-radius: 6px;
+    }
+
+    .install-card-head h3 {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .install-card-head .os-icon { font-size: 1.3rem; }
+
+    .code-block {
+      position: relative;
+      padding: 1.2rem 1.4rem;
+    }
+
+    .code-block pre {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: #94d8a8;
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .code-block .comment { color: var(--muted); }
+
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: auto;
+      width: 28px; height: 28px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .copy-btn:hover { color: var(--text); border-color: var(--accent2); }
+
+    /* ──── GITHUB CTA ──── */
+    #github {
+      background: var(--bg);
+      text-align: center;
+    }
+
+    .cta-box {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 4rem 2rem;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.15) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-box h2 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+
+    .cta-box p {
+      color: var(--muted);
+      max-width: 440px;
+      margin: 0 auto 2.5rem;
+    }
+
+    .github-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: #fff;
+      color: #0d1117;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 0.85rem 2rem;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 20px rgba(255,255,255,0.15);
+    }
+
+    .github-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(255,255,255,0.25);
+    }
+
+    .github-btn svg { flex-shrink: 0; }
+
+    .stats-row {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+      padding-top: 3rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat { text-align: center; }
+    .stat-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ──── FOOTER ──── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--accent1); }
+
+    /* ──── ANIMATIONS ──── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    /* scroll-triggered */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ──── RESPONSIVE ──── */
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      nav { padding: 0 1.2rem; }
+      .hero h1  { font-size: 2.4rem; }
+    }
+
+    @media (max-width: 1023px) {
+      .hero-left, .hero-right { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ──── NAV ──── -->
+<nav>
+  <a class="nav-logo" href="#">
+    <span class="rocket">🚀</span> Avatar <span style="color:var(--muted);font-weight:400;">(avtr)</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#install">Install</a></li>
+    <li>
+      <a class="nav-github" href="https://github.com/Jayakrishna20/file-converter" target="_blank" rel="noopener">
+        <svg height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<!-- ──── HERO ──── -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">⚡ Lightning-fast PDF &amp; Image CLI</div>
+    <img src="hero.png" alt="Avatar CLI" class="hero-img" />
+    <h1>Avatar CLI</h1>
+    <p class="hero-sub">Manipulate PDFs and images right from your terminal — with blazing speed, vibrant colors, and zero friction.</p>
+    <div class="hero-actions">
+      <a href="#install" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Install Now
+      </a>
+      <a href="https://github.com/Jayakrishna20/file-converter" target="_blank" rel="noopener" class="btn btn-secondary">
+        View on GitHub →
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-terminal">
+      <div class="terminal-bar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+      </div>
+      <div class="terminal-body">
+        <div><span class="t-prompt">❯ </span><span class="t-cmd">avtr img2pdf -d images/ -o output/ -f combined.pdf -p A4</span></div>
+        <div><span class="t-out">✔ Scanning images/ — found 12 files</span></div>
+        <div><span class="t-out">✔ Converting... ████████████████████ 100%</span></div>
+        <div><span class="t-out">✔ Combined PDF written → output/combined.pdf</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-prompt">❯ </span><span class="t-cmd">avtr merge -i a.pdf -i b.pdf -d out/ -o merged.pdf</span></div>
+        <div><span class="t-out">✔ Merging 2 files... done!</span></div>
+        <div>&nbsp;</div>
+        <div><span class="t-prompt">❯ </span><span class="t-cmd">avtr --version</span></div>
+        <div><span class="t-out">avtr v1.0.0</span> <span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──── FEATURES ──── -->
+<section id="features">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">What it does</p>
+      <h2 class="section-title">Everything you need,<br/>right in the terminal</h2>
+      <p class="section-desc">Avatar packs powerful file operations into elegant, memorable commands with a colorful console experience.</p>
+    </div>
+    <div class="features-grid">
+
+      <div class="feature-card reveal">
+        <span class="feature-icon">🖼️</span>
+        <h3>Image → PDF Conversion</h3>
+        <p>Convert an entire folder of images into a single, beautifully combined PDF. Supports multiple page sizes including A4, Letter, and more.</p>
+        <span class="feature-tag">avtr img2pdf</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔗</span>
+        <h3>PDF Merging</h3>
+        <p>Combine two or more PDF files into one seamless document. Just pass the inputs and let Avatar handle the rest in seconds.</p>
+        <span class="feature-tag">avtr merge</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <span class="feature-icon">✂️</span>
+        <h3>PDF Splitting</h3>
+        <p>Split a PDF into multiple parts based on a configurable page span. Perfect for breaking large reports into digestible chunks.</p>
+        <span class="feature-tag">avtr split</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <span class="feature-icon">🎨</span>
+        <h3>Rich Console UI</h3>
+        <p>Vibrant colored output and real-time progress bars keep you informed at every step — no silent black-box processing.</p>
+        <span class="feature-tag">color + progressbar</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔄</span>
+        <h3>Self-updating</h3>
+        <p>Run <code style="font-family:'JetBrains Mono',monospace;font-size:0.8em;color:var(--accent2)">avtr update</code> to get the latest installation instructions directly in your terminal — always stay current.</p>
+        <span class="feature-tag">avtr update</span>
+      </div>
+
+      <div class="feature-card reveal">
+        <span class="feature-icon">⚡</span>
+        <h3>Cross-platform &amp; Fast</h3>
+        <p>A single standalone Go binary for Windows, macOS, and Linux. No runtime dependencies, no config files — just download and run.</p>
+        <span class="feature-tag">Go binary</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ──── INSTALL ──── -->
+<section id="install">
+  <div class="container">
+    <div class="reveal">
+      <p class="section-label">Get started</p>
+      <h2 class="section-title">Install in seconds</h2>
+      <p class="section-desc">Choose your preferred method — from package managers to a one-line script.</p>
+    </div>
+
+    <div class="install-grid">
+
+      <!-- Go Install -->
+      <div class="install-card reveal">
+        <div class="install-card-head">
+          <span class="os-icon">🐹</span>
+          <h3>Go Install</h3>
+          <span class="badge">Recommended</span>
+          <button class="copy-btn" onclick="copyCode(this)" title="Copy to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <div class="code-block">
+          <pre>go install github.com/Jayakrishna20/file-converter@latest</pre>
+        </div>
+      </div>
+
+      <!-- macOS -->
+      <div class="install-card reveal">
+        <div class="install-card-head">
+          <span class="os-icon">🍎</span>
+          <h3>macOS — Homebrew</h3>
+          <button class="copy-btn" onclick="copyCode(this)" title="Copy to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <div class="code-block">
+          <pre>brew tap Jayakrishna20/file-converter
+brew install avtr</pre>
+        </div>
+      </div>
+
+      <!-- Linux -->
+      <div class="install-card reveal">
+        <div class="install-card-head">
+          <span class="os-icon">🐧</span>
+          <h3>Linux — APT / DNF</h3>
+          <button class="copy-btn" onclick="copyCode(this)" title="Copy to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <div class="code-block">
+          <pre><span class="comment"># Debian / Ubuntu</span>
+sudo apt update && sudo apt install avtr
+
+<span class="comment"># Fedora</span>
+sudo dnf install avtr</pre>
+        </div>
+      </div>
+
+      <!-- Windows -->
+      <div class="install-card reveal">
+        <div class="install-card-head">
+          <span class="os-icon">🪟</span>
+          <h3>Windows — Winget / Choco</h3>
+          <button class="copy-btn" onclick="copyCode(this)" title="Copy to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <div class="code-block">
+          <pre><span class="comment"># Winget</span>
+winget install avtr
+
+<span class="comment"># Chocolatey</span>
+choco install avtr</pre>
+        </div>
+      </div>
+
+      <!-- Curl Script -->
+      <div class="install-card reveal">
+        <div class="install-card-head">
+          <span class="os-icon">⚡</span>
+          <h3>One-liner Script</h3>
+          <span class="badge">Linux &amp; macOS</span>
+          <button class="copy-btn" onclick="copyCode(this)" title="Copy to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+        <div class="code-block">
+          <pre>curl -sSL https://raw.githubusercontent.com/Jayakrishna20/file-converter/main/install.sh | bash</pre>
+        </div>
+      </div>
+
+      <!-- Binary -->
+      <div class="install-card reveal">
+        <div class="install-card-head">
+          <span class="os-icon">📦</span>
+          <h3>Prebuilt Binaries</h3>
+          <span class="badge">All Platforms</span>
+        </div>
+        <div class="code-block" style="padding-top:1.4rem;">
+          <p style="font-size:0.85rem;color:var(--muted);line-height:1.7;">
+            Head to the
+            <a href="https://github.com/Jayakrishna20/file-converter/releases/latest" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none;font-weight:600;">GitHub Releases page</a>
+            and download the executable that matches your operating system — no build step required.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ──── GITHUB CTA ──── -->
+<section id="github">
+  <div class="container">
+    <div class="cta-box reveal">
+      <h2>Open Source &amp; Free Forever</h2>
+      <p>Avatar is MIT-licensed. Star the repo, report bugs, open PRs — contributions are always welcome.</p>
+
+      <a class="github-btn" href="https://github.com/Jayakrishna20/file-converter" target="_blank" rel="noopener">
+        <svg height="20" viewBox="0 0 16 16" fill="#0d1117"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+
+      <div class="stats-row">
+        <div class="stat"><div class="stat-val">3</div><div class="stat-label">Core Commands</div></div>
+        <div class="stat"><div class="stat-val">Go</div><div class="stat-label">Written in Go</div></div>
+        <div class="stat"><div class="stat-val">MIT</div><div class="stat-label">Open Source License</div></div>
+        <div class="stat"><div class="stat-val">6+</div><div class="stat-label">Install Methods</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ──── FOOTER ──── -->
+<footer>
+  <p>Made with ❤️ by <a href="https://github.com/Jayakrishna20" target="_blank" rel="noopener">Jayakrishnan</a> · Licensed under <a href="https://github.com/Jayakrishna20/file-converter/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a></p>
+</footer>
+
+<!-- ──── JS ──── -->
+<script>
+  // Reveal on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Copy-to-clipboard
+  const clipboardIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+  const checkIcon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+  function copyCode(btn) {
+    const card = btn.closest('.install-card');
+    const pre = card.querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.innerHTML = checkIcon;
+      btn.style.borderColor = '#6ee7b7';
+      setTimeout(() => { btn.innerHTML = clipboardIcon; btn.style.borderColor = ''; }, 1800);
+    });
+  }
+</script>
+
+</body>
+</html>
